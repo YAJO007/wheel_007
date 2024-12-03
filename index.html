@@ -98,16 +98,21 @@ function drawSector(sector, i) {
 function rotate() {
   const sector = sectors[getIndex()];
   ctx.canvas.style.transform = `rotate(${ang - PI / 2}rad)`;
-
   spinEl.textContent = !angVel ? "กดสุ่ม🫵" : sector.label;
   spinEl.style.background = sector.color;
   spinEl.style.color = sector.text;
+  if (angVel) {
+    PlaySoung()
+  }
+
+  
 }
 
 function frame() {
   // Fire an event after the wheel has stopped spinning
   if (!angVel && spinButtonClicked) {
     const finalSector = sectors[getIndex()];
+    
     events.fire("spinEnd", finalSector);
     spinButtonClicked = false; // reset the flag
     return;
@@ -124,6 +129,11 @@ function engine() {
   frame();
   requestAnimationFrame(engine);
 }
+var audio = new Audio('./spin-232536.mp3');
+let play
+function PlaySoung () {
+  audio.play();
+}
 
 function init() {
   sectors.forEach(drawSector);
@@ -139,6 +149,7 @@ init();
 
 events.addListener("spinEnd", (sector) => {
   console.log(`Woop! You won ${sector.label}`);
+  audio.pause();
 });
 </script>
 <script defer src="project.js"></script>
