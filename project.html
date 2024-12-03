@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>วงล้อสุ่มเด็กCS</title>
+  <link rel="stylesheet" href="project.css">
+</head>
+
+</style>
+<link rel="stylesheet" href="project.css" />
+</head>
+
+<body>
+<h1>วงล้อภัยพิบัติระดับหมอลำ🥃</h1>
+<div id="spin_the_wheel">
+<canvas id="wheel" width="800" height="800"></canvas>
+<div id="spin">SPIN</div>
+</div>
+
+<script defer>
+const sectors = [
+  { color: "#FD0E0E", text: "#0B1413", label: "ดื่ม 1 ช็อต🍺" },
+  { color: "#00FF3C", text: "#0B1413", label: "เล่าความลับ🤐" },
+  { color: "#FFFF00", text: "#0B1413", label: "ดื่มครึ่งช็อต🍺" },
+  { color: "#0000FF", text: "#0B1413", label: "เลือกคนดื่ม🍺" },
+  { color: "#FF00E6", text: "#0B1413", label: "พัก 1 ตา💀" },
+  { color: "#FF6F00", text: "#0B1413", label: "เคยทำยก🤐" },
+  { color: "#7700FF", text: "#0B1413", label: "ท้าให้ทำ🙀" },
+  { color: "#FFCCFF", text: "#0B1413", label: "ดื่ม 1 ช็อต🍺" },
+  { color: "#FFE5CC", text: "#0B1413", label: "จิงหรือไม่" },
+  { color: "#FFFB6C", text: "#0B1413", label: "สุ่มคนงัดข้อ💪" },
+  { color: "#FF6666", text: "#0B1413", label: "ดื่ม 1 ช็อต🍺" },
+  { color: "#FFFF00", text: "#0B1413", label: "ลุกขึ้นเต้น1ท้า🎵" },
+  { color: "#CCFFE5", text: "#0B1413", label: "ดื่มครึ่งช็อต🍺" },
+  { color: "#99FF33", text: "#0B1413", label: "เอามือแตะหู👂" },
+  { color: "#FF8383", text: "#0B1413", label: "เลือกดูโอ้👬" },
+  { color: "#FFFFCC", text: "#0B1413", label: "ยกทั้งวง🍺" },
+];
+
+const events = {
+  listeners: {},
+  addListener: function (eventName, fn) {
+    this.listeners[eventName] = this.listeners[eventName] || [];
+    this.listeners[eventName].push(fn);
+  },
+  fire: function (eventName, ...args) {
+    if (this.listeners[eventName]) {
+      for (let fn of this.listeners[eventName]) {
+        fn(...args);
+      }
+    }
+  },
+};
+
+const rand = (m, M) => Math.random() * (M - m) + m;
+const tot = sectors.length;
+const spinEl = document.querySelector("#spin");
+const ctx = document.querySelector("#wheel").getContext("2d");
+const dia = ctx.canvas.width;
+const rad = dia / 2;
+const PI = Math.PI;
+const TAU = 2 * PI;
+const arc = TAU / sectors.length;
+
+const friction = 0.991; // 0.995=soft, 0.99=mid, 0.98=hard
+let angVel = 0; // Angular velocity
+let ang = 0; // Angle in radians
+
+let spinButtonClicked = false;
+
+const getIndex = () => Math.floor(tot - (ang / TAU) * tot) % tot;
+
+function drawSector(sector, i) {
+  const ang = arc * i;
+  ctx.save();
+
+  // COLOR
+  ctx.beginPath();
+  ctx.fillStyle = sector.color;
+  ctx.moveTo(rad, rad);
+  ctx.arc(rad, rad, rad, ang, ang + arc);
+  ctx.lineTo(rad, rad);
+  ctx.fill();
+
+  // TEXT
+  ctx.translate(rad, rad);
+  ctx.rotate(ang + arc / 2);
+  ctx.textAlign = "right";
+  ctx.fillStyle = sector.text;
+  ctx.font = "bold 30px 'Lato', sans-serif";
+  ctx.fillText(sector.label, rad - 10, 10);
+  //
+
+  ctx.restore();
+}
+
+function rotate() {
+  const sector = sectors[getIndex()];
+  ctx.canvas.style.transform = `rotate(${ang - PI / 2}rad)`;
+
+  spinEl.textContent = !angVel ? "กดสุ่ม🫵" : sector.label;
+  spinEl.style.background = sector.color;
+  spinEl.style.color = sector.text;
+}
+
+function frame() {
+  // Fire an event after the wheel has stopped spinning
+  if (!angVel && spinButtonClicked) {
+    const finalSector = sectors[getIndex()];
+    events.fire("spinEnd", finalSector);
+    spinButtonClicked = false; // reset the flag
+    return;
+  }
+
+  angVel *= friction; // Decrement velocity by friction
+  if (angVel < 0.002) angVel = 0; // Bring to stop
+  ang += angVel; // Update angle
+  ang %= TAU; // Normalize angle
+  rotate();
+}
+
+function engine() {
+  frame();
+  requestAnimationFrame(engine);
+}
+
+function init() {
+  sectors.forEach(drawSector);
+  rotate(); // Initial rotation
+  engine(); // Start engine
+  spinEl.addEventListener("click", () => {
+    if (!angVel) angVel = rand(0.25, 0.45);
+    spinButtonClicked = true;
+  });
+}
+
+init();
+
+events.addListener("spinEnd", (sector) => {
+  console.log(`Woop! You won ${sector.label}`);
+});
+</script>
+<script defer src="project.js"></script>
+</body>
+</html>
